@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SUPER AHINOAM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        height: 100%;
+        overflow: hidden;
+        font-family: monospace;
+      }
+      #game {
+        width: 100vw;
+        height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+      #game canvas {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      #hud {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        color: #fff;
+        font-size: 12px;
+        line-height: 1.4;
+        pointer-events: none;
+        text-shadow: 1px 1px 0 #000;
+      }
+      #title-overlay {
+        position: fixed;
+        inset: 0;
+        text-align: center;
+        font-family: "Press Start 2P", monospace;
+        color: #fff;
+        background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 70%, #c2845a 70%, #c2845a 85%, #6b3410 85%, #6b3410 100%);
+        z-index: 10;
+        cursor: pointer;
+        user-select: none;
+        overflow: hidden;
+      }
+      #title-overlay.hidden { display: none; }
+
+      .t-sky { position: absolute; inset: 0; pointer-events: none; }
+      .cloud { position: absolute; background: #fff; border-radius: 999px;
+        box-shadow: 18px 0 0 #fff, -18px 0 0 #fff, 0 -10px 0 #fff, 14px -8px 0 #fff, -14px -8px 0 #fff; }
+      .cloud-1 { width: 28px; height: 22px; top: 12%; left: 18%; animation: drift 22s linear infinite; }
+      .cloud-2 { width: 32px; height: 24px; top: 22%; right: 14%; animation: drift 28s linear infinite reverse; }
+      .cloud-3 { width: 24px; height: 18px; top: 8%; left: 55%; animation: drift 35s linear infinite; }
+      @keyframes drift { from { transform: translateX(-40px); } to { transform: translateX(40px); } }
+
+      .hill { position: absolute; bottom: 30%; background: #2a8a2a;
+        border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        border-top: 4px solid #1a6a1a; }
+      .hill-1 { width: 220px; height: 110px; left: 10%; }
+      .hill-2 { width: 320px; height: 160px; right: 8%; opacity: 0.85; }
+
+      .t-blocks { position: absolute; top: 18%; left: 0; right: 0; display: flex; gap: 12px; justify-content: center; z-index: 2; }
+      .qblock, .brick {
+        width: 44px; height: 44px;
+        image-rendering: pixelated;
+        box-shadow: inset -3px -3px 0 rgba(0,0,0,0.35), inset 3px 3px 0 rgba(255,255,255,0.25);
+      }
+      .qblock {
+        background: #d8951a;
+        color: #fff;
+        font-family: "Press Start 2P", monospace;
+        font-size: 24px;
+        line-height: 44px;
+        border: 2px solid #000;
+        animation: bob 1.6s ease-in-out infinite;
+      }
+      .qblock:nth-child(3) { animation-delay: 0.2s; }
+      .qblock:nth-child(5) { animation-delay: 0.4s; }
+      .brick {
+        background:
+          linear-gradient(#000 2px, transparent 2px) 0 0/100% 22px,
+          linear-gradient(90deg, #000 2px, transparent 2px) 0 0/22px 22px,
+          #b8521a;
+        border: 2px solid #000;
+      }
+      @keyframes bob { 50% { transform: translateY(-6px); } }
+
+      .t-stack { position: relative; z-index: 3; padding-top: 28%; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+      .t-super {
+        font-size: 88px;
+        color: #ffd700;
+        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 8px 8px 0 rgba(0,0,0,0.4);
+        letter-spacing: 4px;
+      }
+      .t-name {
+        font-size: 88px;
+        color: #fff;
+        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 8px 8px 0 rgba(0,0,0,0.4);
+        letter-spacing: 4px;
+      }
+      .t-tag { font-size: 14px; color: #fff; text-shadow: 2px 2px 0 #000; margin-top: 8px; }
+      .t-coins { display: flex; gap: 14px; margin-top: 8px; }
+      .coin {
+        width: 18px; height: 22px;
+        background: #ffd700;
+        border-radius: 50%;
+        border: 2px solid #b8860b;
+        box-shadow: inset 2px 0 0 #fff8a0, inset -2px 0 0 #b8860b;
+        animation: coin-spin 1.4s ease-in-out infinite;
+      }
+      .coin:nth-child(2) { animation-delay: 0.15s; }
+      .coin:nth-child(3) { animation-delay: 0.3s; }
+      @keyframes coin-spin {
+        0%, 100% { transform: scaleX(1); }
+        50% { transform: scaleX(0.2); }
+      }
+      .t-press {
+        font-size: 22px;
+        margin-top: 18px;
+        text-shadow: 3px 3px 0 #000;
+        animation: blink 1.2s steps(2) infinite;
+      }
+      .t-ground {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 15%;
+        background:
+          linear-gradient(#5a2a08 1px, transparent 1px) 0 0/100% 8px,
+          linear-gradient(90deg, #5a2a08 1px, transparent 1px) 0 0/8px 8px,
+          #6b3410;
+      }
+      .t-foot {
+        position: absolute; bottom: 14px; left: 0; right: 0;
+        font-size: 11px; color: #fff;
+        text-shadow: 2px 2px 0 #000;
+        z-index: 4;
+      }
+      @keyframes blink { 50% { opacity: 0.25; } }
+
+      @media (max-height: 720px) {
+        .t-super, .t-name { font-size: 64px; }
+        .qblock, .brick { width: 36px; height: 36px; }
+        .qblock { font-size: 20px; line-height: 36px; }
+        .t-press { font-size: 18px; }
+      }
+
+      #milestone-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        font-family: "Press Start 2P", monospace;
+        color: #fff;
+      }
+      #milestone-modal .m-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.78);
+      }
+      #milestone-modal .m-card {
+        position: relative;
+        width: min(560px, 92vw);
+        background: #fdf6e3;
+        color: #222;
+        border: 4px solid #000;
+        box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6);
+        padding: 22px 26px 18px;
+        animation: m-pop 180ms ease-out;
+      }
+      @keyframes m-pop {
+        from { transform: translateY(8px) scale(0.96); opacity: 0; }
+        to { transform: translateY(0) scale(1); opacity: 1; }
+      }
+      #milestone-modal .m-tier {
+        font-size: 9px;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 0 #000;
+        margin-bottom: 10px;
+      }
+      #milestone-modal .m-company {
+        font-size: 22px;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+        line-height: 1.2;
+      }
+      #milestone-modal .m-role {
+        font-size: 11px;
+        color: #5c5c5c;
+        margin-bottom: 4px;
+      }
+      #milestone-modal .m-dates {
+        font-family: monospace;
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 14px;
+      }
+      #milestone-modal .m-divider {
+        height: 2px;
+        background: #222;
+        opacity: 0.25;
+        margin: 6px 0 14px;
+      }
+      #milestone-modal .m-metric {
+        font-size: 13px;
+        color: #c8842a;
+        margin-bottom: 12px;
+        line-height: 1.4;
+      }
+      #milestone-modal .m-detail {
+        font-family: monospace;
+        font-size: 14px;
+        color: #333;
+        line-height: 1.55;
+        margin-bottom: 18px;
+      }
+      #milestone-modal .m-hint {
+        font-size: 9px;
+        color: #888;
+        text-align: center;
+        animation: blink 1.2s steps(2) infinite;
+      }
+      @media (max-width: 600px) {
+        #milestone-modal .m-company { font-size: 16px; }
+        #milestone-modal .m-metric { font-size: 11px; }
+        #milestone-modal .m-detail { font-size: 12px; }
+      }
+
+      #end-card {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        font-family: "Press Start 2P", monospace;
+        color: #fff;
+      }
+      #end-card .e-backdrop {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 70%, #c2845a 70%, #c2845a 85%, #6b3410 85%, #6b3410 100%);
+      }
+      #end-card .e-card {
+        position: relative;
+        width: min(640px, 92vw);
+        text-align: center;
+        padding: 30px 26px 22px;
+      }
+      #end-card .e-headline {
+        font-size: 56px;
+        color: #ffd700;
+        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 8px 8px 0 rgba(0,0,0,0.4);
+        letter-spacing: 4px;
+        margin-bottom: 16px;
+      }
+      #end-card .e-sub {
+        font-size: 12px;
+        text-shadow: 2px 2px 0 #000;
+        margin-bottom: 22px;
+      }
+      #end-card .e-stats {
+        font-size: 16px;
+        color: #fff;
+        text-shadow: 3px 3px 0 #000;
+        margin-bottom: 10px;
+      }
+      #end-card .e-arc {
+        font-size: 9px;
+        color: #ffd56b;
+        text-shadow: 2px 2px 0 #000;
+        margin-bottom: 18px;
+        letter-spacing: 1px;
+      }
+      #end-card .e-detail {
+        font-family: monospace;
+        font-size: 14px;
+        line-height: 1.55;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.45);
+        border: 2px solid #000;
+        padding: 12px 14px;
+        margin: 0 auto 20px;
+        max-width: 560px;
+        text-align: left;
+      }
+      #end-card .e-links {
+        display: flex;
+        gap: 18px;
+        justify-content: center;
+        margin-bottom: 22px;
+      }
+      #end-card .e-links a {
+        font-size: 11px;
+        color: #ffd700;
+        text-decoration: none;
+        text-shadow: 2px 2px 0 #000;
+        border: 2px solid #000;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 8px 14px;
+      }
+      #end-card .e-links a:hover {
+        background: rgba(0, 0, 0, 0.8);
+      }
+      #end-card .e-restart {
+        font-family: "Press Start 2P", monospace;
+        font-size: 12px;
+        color: #fff;
+        background: transparent;
+        border: none;
+        text-shadow: 3px 3px 0 #000;
+        cursor: pointer;
+        animation: blink 1.2s steps(2) infinite;
+      }
+      #end-card .e-credits {
+        margin-top: 18px;
+        font-family: monospace;
+        font-size: 10px;
+        color: #fff;
+        text-shadow: 2px 2px 0 #000;
+        opacity: 0.9;
+      }
+      #end-card .e-credits a {
+        color: #ffd700;
+        text-decoration: underline;
+      }
+      @media (max-height: 720px) {
+        #end-card .e-headline { font-size: 40px; }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-CxGrbaWh.js"></script>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="title-overlay">
+      <div class="t-sky">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+        <div class="hill hill-1"></div>
+        <div class="hill hill-2"></div>
+      </div>
+      <div class="t-blocks">
+        <span class="qblock">?</span>
+        <span class="brick"></span>
+        <span class="qblock">?</span>
+        <span class="brick"></span>
+        <span class="qblock">?</span>
+      </div>
+      <div class="t-stack">
+        <div class="t-super">SUPER</div>
+        <div class="t-name">AHINOAM</div>
+        <div class="t-tag">a career-as-platformer</div>
+        <div class="t-coins">
+          <span class="coin"></span>
+          <span class="coin"></span>
+          <span class="coin"></span>
+        </div>
+        <div class="t-press">PRESS  SPACE</div>
+      </div>
+      <div class="t-ground"></div>
+      <div class="t-foot">(c) 2026 &middot; 1-PLAYER &middot; STREAMELEMENTS PM EDITION</div>
+    </div>
+    <div id="hud">
+      ARROWS = move &middot; SPACE = jump (hold for higher) &middot; SHIFT = run<br />
+      <span id="metrics"></span>
+    </div>
+  </body>
+</html>
