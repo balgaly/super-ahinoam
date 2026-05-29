@@ -318,8 +318,51 @@ await writePng(brick, `${OUT}/brick.png`);
 await writePng(coin, `${OUT}/coin.png`);
 await writePng(usedBlock, `${OUT}/used_block.png`);
 await writePng(ground, `${OUT}/ground.png`);
+PAL['x'] = [188, 32, 188, 255];
+PAL['X'] = [120, 16, 120, 255];
+PAL['y'] = [248, 88, 248, 255];
+
+const slimeA = [
+  '................',
+  '................',
+  '................',
+  '......XXXXXX....',
+  '....XXxxxxxxXX..',
+  '...XxxxxxxxxxxX.',
+  '..XxxKxxxxKxxxxX',
+  '..XxxKWxxxKWxxxX',
+  '..XxxxxxxxxxxxxX',
+  '..XxxKxxxxxxKxxX',
+  '..XxxxKKKKKKxxxX',
+  '..XxxxxxxxxxxxxX',
+  '..XXxxxxxxxxxxX.',
+  '...XXXXXXXXXXX..',
+  '....KK......KK..',
+  '....KK......KK..'
+];
+
+const slimeB = [
+  '................',
+  '................',
+  '......XXXXXX....',
+  '....XXxxxxxxXX..',
+  '...XxxxxxxxxxxX.',
+  '..XxxKxxxxKxxxxX',
+  '..XxxKWxxxKWxxxX',
+  '..XxxxxxxxxxxxxX',
+  '..XxxKxxxxxxKxxX',
+  '..XxxxKKKKKKxxxX',
+  '..XxxxxxxxxxxxxX',
+  '..XXxxxxxxxxxxX.',
+  '...XXXXXXXXXXX..',
+  '....KKKKKKKKKK..',
+  '....KK....KK....',
+  '....KK....KK....'
+];
+
 await writePng(cloud, `${OUT}/cloud.png`);
 await writePng(hill, `${OUT}/hill.png`);
 await writePng(flagpole, `${OUT}/flagpole.png`);
+await writeStrip([slimeA, slimeB], `${OUT}/slime.png`);
 
 console.log('done.');

@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { MilestoneModal } from '../ui/MilestoneModal';
-import { EndCard } from '../ui/EndCard';
 import { ALL_MILESTONES } from '../milestones';
 
 const TILE = 16;
@@ -45,8 +44,8 @@ const PLACEMENTS: MilestonePlacement[] = [
 
 const TIER_BG: Record<string, number> = {
   'drive-by': 0x5c94fc,
-  'mid': 0x4a90a8,
-  'climax': 0x2a1a3a
+  'mid': 0xfc7c4c,
+  'climax': 0x6438a0
 };
 
 const TIER_TINT: Record<string, number> = {
@@ -73,14 +72,15 @@ export class World1Scene extends Phaser.Scene {
   private jumpBufferCounter = 0;
   private metricsEl: HTMLElement | null = null;
   private modal!: MilestoneModal;
-  private endCard!: EndCard;
   private flagpole!: Phaser.GameObjects.Image;
   private endTriggered = false;
-  private zoneLabel!: Phaser.GameObjects.Text;
+  private zoneLabelEl!: HTMLDivElement;
   private currentTier = '';
   private modalWasOpen = false;
   private clouds: Phaser.GameObjects.Image[] = [];
   private hills: Phaser.GameObjects.Image[] = [];
+  private slimes!: Phaser.Physics.Arcade.Group;
+  private score = 0;
 
   constructor() {
     super('World1');
@@ -89,9 +89,9 @@ export class World1Scene extends Phaser.Scene {
   create(): void {
     this.metricsEl = document.getElementById('metrics');
     this.modal = new MilestoneModal(this);
-    this.endCard = new EndCard(this);
     this.endTriggered = false;
     this.milestonesHit = 0;
+    this.score = 0;
     this.currentTier = '';
     this.modalWasOpen = false;
     this.clouds = [];
@@ -150,6 +150,27 @@ export class World1Scene extends Phaser.Scene {
     this.physics.add.collider(this.hero, this.ground);
     this.physics.add.collider(this.hero, this.milestoneBlocks, (_h, b) => this.hitMilestone(b as Phaser.Physics.Arcade.Sprite));
 
+    this.slimes = this.physics.add.group();
+    if (!this.anims.exists('slime-walk')) {
+      this.anims.create({
+        key: 'slime-walk',
+        frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 1 }),
+        frameRate: 4,
+        repeat: -1
+      });
+    }
+    const SLIME_TILES = [30, 50, 75, 95, 120, 145, 165, 185];
+    SLIME_TILES.forEach(tx => {
+      const s = this.slimes.create(tx * TILE + TILE / 2, groundY - 8, 'slime') as Phaser.Physics.Arcade.Sprite;
+      s.setCollideWorldBounds(true);
+      s.setVelocityX(-30);
+      s.setBounce(1, 0);
+      s.body!.setSize(14, 12).setOffset(1, 4);
+      s.play('slime-walk');
+    });
+    this.physics.add.collider(this.slimes, this.ground);
+    this.physics.add.overlap(this.hero, this.slimes, (_h, s) => this.handleSlime(s as Phaser.Physics.Arcade.Sprite));
+
     this.cameras.main.startFollow(this.hero, true, 0.15, 0.1);
     this.cameras.main.setDeadzone(60, 80);
 
@@ -161,15 +182,15 @@ export class World1Scene extends Phaser.Scene {
       run: kb.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT)
     };
 
-    this.zoneLabel = this.add.text(this.cameras.main.width / 2, 10, '', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
-      color: '#ffd700',
-      stroke: '#000000',
-      strokeThickness: 3,
-      shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 0, fill: true },
-      resolution: 2
-    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(500);
+    let zoneEl = document.getElementById('zone-label') as HTMLDivElement | null;
+    if (!zoneEl) {
+      zoneEl = document.createElement('div');
+      zoneEl.id = 'zone-label';
+      document.body.appendChild(zoneEl);
+    }
+    this.zoneLabelEl = zoneEl;
+    this.events.once('shutdown', () => zoneEl?.remove());
+    this.events.once('destroy', () => zoneEl?.remove());
   }
 
   update(): void {
@@ -247,7 +268,7 @@ export class World1Scene extends Phaser.Scene {
     this.updateTier();
 
     if (this.metricsEl) {
-      this.metricsEl.textContent = `milestones ${this.milestonesHit}/12 | tier ${this.currentTier}`;
+      this.metricsEl.textContent = `score ${this.score} | milestones ${this.milestonesHit}/12 | tier ${this.currentTier}`;
     }
 
     if (this.hero.y > LEVEL_H + 64) {
@@ -259,7 +280,12 @@ export class World1Scene extends Phaser.Scene {
       this.endTriggered = true;
       this.hero.setVelocity(0, 0);
       this.hero.setAcceleration(0, 0);
-      this.time.delayedCall(400, () => this.endCard.show(this.milestonesHit, 12));
+      this.zoneLabelEl.textContent = 'YOU MADE IT!';
+      this.zoneLabelEl.classList.remove('z-flash');
+      void this.zoneLabelEl.offsetWidth;
+      this.zoneLabelEl.classList.add('z-flash');
+      this.cameras.main.flash(400, 255, 215, 0);
+      this.time.delayedCall(1400, () => this.scene.restart());
     }
   }
 
@@ -295,17 +321,58 @@ export class World1Scene extends Phaser.Scene {
     let label = 'EARLY CAREER';
     if (tx >= 100) {
       tier = 'climax';
-      label = 'STREAMELEMENTS — PRODUCT';
+      label = 'PRODUCT WORLD';
     } else if (tx >= 55) {
       tier = 'mid';
-      label = 'STREAMELEMENTS — OPS';
+      label = 'OPERATIONS WORLD';
     }
 
     if (tier === this.currentTier) return;
     this.currentTier = tier;
     this.cameras.main.setBackgroundColor(TIER_BG[tier]);
-    this.zoneLabel.setText(label).setAlpha(1);
-    this.tweens.add({ targets: this.zoneLabel, alpha: 0.4, duration: 1500, delay: 1500 });
+    this.zoneLabelEl.textContent = label;
+    this.zoneLabelEl.classList.remove('z-flash');
+    void this.zoneLabelEl.offsetWidth;
+    this.zoneLabelEl.classList.add('z-flash');
+  }
+
+  private handleSlime(slime: Phaser.Physics.Arcade.Sprite): void {
+    if (!slime.active) return;
+    const heroBody = this.hero.body as Phaser.Physics.Arcade.Body;
+    const slimeBody = slime.body as Phaser.Physics.Arcade.Body;
+    const stomp = heroBody.velocity.y > 60 && this.hero.y < slime.y - 4;
+    if (stomp) {
+      slime.disableBody(true, true);
+      this.hero.setVelocityY(-260);
+      this.score += 100;
+      this.popText('+100', slime.x, slime.y - 10, '#ffd700');
+      this.cameras.main.shake(80, 0.003);
+    } else {
+      this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 24);
+      this.hero.setVelocity(0, 0);
+      this.popText('OUCH', this.hero.x, this.hero.y - 12, '#ff5555');
+      this.cameras.main.flash(200, 255, 60, 60);
+      slimeBody.velocity.x = -30;
+    }
+  }
+
+  private popText(text: string, x: number, y: number, color: string): void {
+    const t = this.add.text(x, y, text, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color,
+      stroke: '#000000',
+      strokeThickness: 2,
+      resolution: 2
+    }).setOrigin(0.5).setDepth(800);
+    this.tweens.add({
+      targets: t,
+      y: y - 28,
+      alpha: 0,
+      duration: 700,
+      ease: 'Cubic.Out',
+      onComplete: () => t.destroy()
+    });
   }
 
   private hitMilestone(block: Phaser.Physics.Arcade.Sprite): void {
@@ -316,11 +383,24 @@ export class World1Scene extends Phaser.Scene {
     block.setData('isMilestone', false);
     block.clearTint();
     this.milestonesHit++;
+    this.score += 200;
 
     this.tweens.add({ targets: block, y: block.y - 4, duration: 80, yoyo: true });
 
+    const coin = this.add.image(block.x, block.y - 4, 'coin').setDepth(700);
+    this.tweens.add({
+      targets: coin,
+      y: block.y - 36,
+      alpha: 0,
+      duration: 500,
+      ease: 'Cubic.Out',
+      onComplete: () => coin.destroy()
+    });
+    this.popText('+200', block.x, block.y - 8, '#ffd700');
+    this.cameras.main.shake(60, 0.002);
+
     const milestone = ALL_MILESTONES[id];
-    this.time.delayedCall(180, () => {
+    this.time.delayedCall(280, () => {
       this.modal.show(milestone, () => {});
     });
   }
