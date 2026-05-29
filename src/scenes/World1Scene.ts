@@ -141,11 +141,11 @@ export class World1Scene extends Phaser.Scene {
       });
     }
 
-    this.hero = this.physics.add.sprite(2 * TILE, groundY - 24, 'hero_idle');
+    this.hero = this.physics.add.sprite(2 * TILE, groundY - 32, 'hero_idle');
     this.hero.setCollideWorldBounds(true);
     this.hero.setMaxVelocity(RUN_MAX, 1000);
     this.hero.setDragX(GROUND_DRAG);
-    this.hero.body!.setSize(12, 22).setOffset(2, 2);
+    this.hero.body!.setSize(16, 28).setOffset(4, 3);
 
     this.physics.add.collider(this.hero, this.ground);
     this.physics.add.collider(this.hero, this.milestoneBlocks, (_h, b) => this.hitMilestone(b as Phaser.Physics.Arcade.Sprite));
@@ -272,7 +272,7 @@ export class World1Scene extends Phaser.Scene {
     }
 
     if (this.hero.y > LEVEL_H + 64) {
-      this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 24);
+      this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 32);
       this.hero.setVelocity(0, 0);
     }
 
@@ -348,7 +348,7 @@ export class World1Scene extends Phaser.Scene {
       this.popText('+100', slime.x, slime.y - 10, '#ffd700');
       this.cameras.main.shake(80, 0.003);
     } else {
-      this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 24);
+      this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 32);
       this.hero.setVelocity(0, 0);
       this.popText('OUCH', this.hero.x, this.hero.y - 12, '#ff5555');
       this.cameras.main.flash(200, 255, 60, 60);
