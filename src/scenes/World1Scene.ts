@@ -54,6 +54,12 @@ const TIER_TINT: Record<string, number> = {
   'climax': 0xff8888
 };
 
+const TIER_HERO_SCALE: Record<string, number> = {
+  'drive-by': 1.0,
+  'mid': 1.35,
+  'climax': 1.7
+};
+
 interface Keys {
   left: Phaser.Input.Keyboard.Key;
   right: Phaser.Input.Keyboard.Key;
@@ -328,12 +334,33 @@ export class World1Scene extends Phaser.Scene {
     }
 
     if (tier === this.currentTier) return;
+    const grew = this.currentTier !== '' && TIER_HERO_SCALE[tier] > TIER_HERO_SCALE[this.currentTier];
     this.currentTier = tier;
     this.cameras.main.setBackgroundColor(TIER_BG[tier]);
     this.zoneLabelEl.textContent = label;
     this.zoneLabelEl.classList.remove('z-flash');
     void this.zoneLabelEl.offsetWidth;
     this.zoneLabelEl.classList.add('z-flash');
+
+    const targetScale = TIER_HERO_SCALE[tier];
+    if (grew) {
+      this.tweens.add({
+        targets: this.hero,
+        scale: targetScale * 1.15,
+        duration: 200,
+        yoyo: true,
+        ease: 'Cubic.Out',
+        onComplete: () => {
+          this.hero.setScale(targetScale);
+          this.hero.body!.setSize(16, 28).setOffset(4, 3);
+        }
+      });
+      this.popText('LEVEL UP!', this.hero.x, this.hero.y - 30, '#ffd700');
+      this.cameras.main.flash(250, 255, 215, 0);
+    } else {
+      this.hero.setScale(targetScale);
+      this.hero.body!.setSize(16, 28).setOffset(4, 3);
+    }
   }
 
   private handleSlime(slime: Phaser.Physics.Arcade.Sprite): void {
