@@ -37,10 +37,12 @@ const PLACEMENTS: MilestonePlacement[] = [
   { tile: 65, id: 'se_ops_clients' },
   { tile: 67, id: 'se_ops_reports' },
 
-  { tile: 110, id: 'se_pm_tickets' },
-  { tile: 130, id: 'se_pm_volume' },
-  { tile: 150, id: 'se_pm_module' },
-  { tile: 170, id: 'se_pm_savings' }
+  { tile: 105, id: 'se_pm_step_up' },
+  { tile: 118, id: 'se_pm_data_model' },
+  { tile: 132, id: 'se_pm_tickets' },
+  { tile: 146, id: 'se_pm_volume' },
+  { tile: 160, id: 'se_pm_module' },
+  { tile: 174, id: 'se_pm_savings' }
 ];
 
 const TIER_BG: Record<string, number> = {
@@ -81,6 +83,7 @@ export class World1Scene extends Phaser.Scene {
   private modal!: MilestoneModal;
   private endCard!: EndCard;
   private flagpole!: Phaser.GameObjects.Image;
+  private flag!: Phaser.GameObjects.Image;
   private endTriggered = false;
   private zoneLabelEl!: HTMLDivElement;
   private currentTier = '';
@@ -157,6 +160,7 @@ export class World1Scene extends Phaser.Scene {
     });
 
     this.flagpole = this.add.image(LEVEL_W - 8 * TILE, groundY - 144, 'flagpole').setOrigin(0, 0);
+    this.flag = this.add.image(this.flagpole.x + 5, this.flagpole.y + 8, 'flag').setOrigin(0, 0).setDepth(5);
 
     if (!this.anims.exists('hero-walk')) {
       this.anims.create({
@@ -325,16 +329,24 @@ export class World1Scene extends Phaser.Scene {
       void this.zoneLabelEl.offsetWidth;
       this.zoneLabelEl.classList.add('z-flash');
       this.cameras.main.flash(400, 255, 215, 0);
+      this.tweens.add({
+        targets: this.flag,
+        y: this.flagpole.y + 128,
+        duration: 900,
+        ease: 'Cubic.In'
+      });
       this.fireworks();
-      this.time.delayedCall(1600, () => this.endCard.show(this.milestonesHit, 12, this.score));
+      this.time.delayedCall(2200, () => this.endCard.show(this.milestonesHit, 14, this.score));
     }
   }
 
   private updateTracker(): void {
     const el = document.getElementById('tracker-stars');
     if (!el) return;
-    const filled = '*'.repeat(this.milestonesHit);
-    const empty = '*'.repeat(12 - this.milestonesHit);
+    const total = 14;
+    const hit = Math.min(this.milestonesHit, total);
+    const filled = '*'.repeat(hit);
+    const empty = '*'.repeat(total - hit);
     el.textContent = '';
     if (filled.length) {
       const f = document.createElement('span');
@@ -520,15 +532,16 @@ export class World1Scene extends Phaser.Scene {
 
     this.tweens.add({ targets: block, y: block.y - 4, duration: 80, yoyo: true });
 
+    const heroH = this.hero.displayHeight;
+    const arcLift = 40 + heroH * 0.9;
     for (let i = 0; i < 6; i++) {
       const coin = this.add.image(block.x, block.y - 4, 'coin').setDepth(700);
       const angle = -Math.PI / 2 + (i - 2.5) * 0.35;
       const dx = Math.cos(angle) * 60;
-      const dy = Math.sin(angle) * 60;
       this.tweens.add({
         targets: coin,
         x: block.x + dx,
-        y: block.y + dy,
+        y: block.y - arcLift + Math.abs(dx) * 0.3,
         alpha: 0,
         scale: 0.5,
         duration: 600,

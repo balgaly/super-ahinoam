@@ -44,22 +44,22 @@ export class EndCard {
 
     const detail = document.createElement('div');
     detail.className = 'e-detail';
-    detail.textContent = 'Product Manager focused on fraud, risk, and trust. Reduced support ticket volume ~50%, processed ~2.5k weekly investigations, shipped fake-accounts detection module, freed ~10 hr/week, trained 7+ teammates. Critical thinker, data-driven, ships fast.';
+    detail.textContent = 'Product Manager specializing in fraud, risk, and trust & safety systems for creator-economy and marketplace platforms. 4+ years at StreamElements: redesigned detection flows for ~50% fewer fraud support tickets, supported ~2.5k weekly investigations across ~20 campaigns/month, shipped fake-accounts module + yellow-flag process, defined fraud schema across the campaign-management system, reported risk trends to CTO, saved ~10 hrs/week and trained 7+ teammates. Critical thinker. Data-driven. Ships fast.';
 
     const links = document.createElement('div');
     links.className = 'e-links';
     const linkedin = document.createElement('a');
     linkedin.href = 'https://www.linkedin.com/in/ahinoam-balgaly/';
     linkedin.target = '_blank';
-    linkedin.rel = 'noopener';
+    linkedin.rel = 'noopener noreferrer';
     linkedin.textContent = 'LINKEDIN';
     const mail = document.createElement('a');
-    mail.href = 'mailto:ahinoam.balgaly@gmail.com';
+    mail.href = 'mailto:ahinoam@balgaly.com';
     mail.textContent = 'EMAIL';
     const cv = document.createElement('a');
     cv.href = 'cv.pdf';
     cv.target = '_blank';
-    cv.rel = 'noopener';
+    cv.rel = 'noopener noreferrer';
     cv.textContent = 'DOWNLOAD CV';
     links.append(linkedin, mail, cv);
 
@@ -80,14 +80,14 @@ export class EndCard {
     const repoLink = document.createElement('a');
     repoLink.href = 'https://github.com/golansoffer/interactive-resume';
     repoLink.target = '_blank';
-    repoLink.rel = 'noopener';
+    repoLink.rel = 'noopener noreferrer';
     repoLink.textContent = 'interactive-resume';
     const byPart = document.createElement('span');
     byPart.textContent = ' by ';
     const authorLink = document.createElement('a');
     authorLink.href = 'https://github.com/golansoffer';
     authorLink.target = '_blank';
-    authorLink.rel = 'noopener';
+    authorLink.rel = 'noopener noreferrer';
     authorLink.textContent = 'Golan Soffer';
     const tail = document.createElement('span');
     tail.textContent = ' — the original career-as-game pioneer whose vision lit the path.';
