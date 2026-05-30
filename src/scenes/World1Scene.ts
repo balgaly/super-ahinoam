@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { MilestoneModal } from '../ui/MilestoneModal';
+import { EndCard } from '../ui/EndCard';
 import { ALL_MILESTONES } from '../milestones';
 
 const TILE = 16;
@@ -78,6 +79,7 @@ export class World1Scene extends Phaser.Scene {
   private jumpBufferCounter = 0;
   private metricsEl: HTMLElement | null = null;
   private modal!: MilestoneModal;
+  private endCard!: EndCard;
   private flagpole!: Phaser.GameObjects.Image;
   private endTriggered = false;
   private zoneLabelEl!: HTMLDivElement;
@@ -87,6 +89,7 @@ export class World1Scene extends Phaser.Scene {
   private hills: Phaser.GameObjects.Image[] = [];
   private slimes!: Phaser.Physics.Arcade.Group;
   private score = 0;
+  private airComboCount = 0;
 
   constructor() {
     super('World1');
@@ -95,9 +98,11 @@ export class World1Scene extends Phaser.Scene {
   create(): void {
     this.metricsEl = document.getElementById('metrics');
     this.modal = new MilestoneModal(this);
+    this.endCard = new EndCard(this);
     this.endTriggered = false;
     this.milestonesHit = 0;
     this.score = 0;
+    this.airComboCount = 0;
     this.currentTier = '';
     this.modalWasOpen = false;
     this.clouds = [];
@@ -120,6 +125,26 @@ export class World1Scene extends Phaser.Scene {
       this.ground.create(x * TILE + TILE / 2, groundY + TILE / 2, 'ground').refreshBody();
       this.ground.create(x * TILE + TILE / 2, groundY + TILE * 1.5, 'ground').refreshBody();
     }
+
+    const platforms: Array<[number, number, number]> = [
+      [10, 5, 3],
+      [33, 4, 2],
+      [55, 6, 3],
+      [80, 5, 2],
+      [88, 7, 4],
+      [97, 5, 4],
+      [115, 5, 3],
+      [125, 7, 3],
+      [137, 6, 4],
+      [155, 5, 3],
+      [175, 6, 3]
+    ];
+    platforms.forEach(([tx, height, len]) => {
+      const py = groundY - height * TILE;
+      for (let i = 0; i < len; i++) {
+        this.ground.create((tx + i) * TILE + TILE / 2, py, 'brick').refreshBody();
+      }
+    });
 
     const blockY = groundY - TILE * 4;
     PLACEMENTS.forEach(p => {
@@ -195,8 +220,13 @@ export class World1Scene extends Phaser.Scene {
       document.body.appendChild(zoneEl);
     }
     this.zoneLabelEl = zoneEl;
-    this.events.once('shutdown', () => zoneEl?.remove());
-    this.events.once('destroy', () => zoneEl?.remove());
+    const cleanup = (): void => {
+      zoneEl?.remove();
+      document.getElementById('fanfare')?.remove();
+    };
+    this.events.once('shutdown', cleanup);
+    this.events.once('destroy', cleanup);
+    this.updateTracker();
   }
 
   update(): void {
@@ -245,7 +275,10 @@ export class World1Scene extends Phaser.Scene {
 
     this.hero.setDragX(onGround ? GROUND_DRAG : 0);
 
-    if (onGround) this.coyoteCounter = COYOTE_FRAMES;
+    if (onGround) {
+      this.coyoteCounter = COYOTE_FRAMES;
+      this.airComboCount = 0;
+    }
     else if (this.coyoteCounter > 0) this.coyoteCounter--;
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.jump)) this.jumpBufferCounter = JUMP_BUFFER_FRAMES;
@@ -274,8 +307,9 @@ export class World1Scene extends Phaser.Scene {
     this.updateTier();
 
     if (this.metricsEl) {
-      this.metricsEl.textContent = `score ${this.score} | milestones ${this.milestonesHit}/12 | tier ${this.currentTier}`;
+      this.metricsEl.textContent = `score ${this.score.toLocaleString()} | tier ${this.currentTier}`;
     }
+    this.updateTracker();
 
     if (this.hero.y > LEVEL_H + 64) {
       this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 32);
@@ -291,7 +325,72 @@ export class World1Scene extends Phaser.Scene {
       void this.zoneLabelEl.offsetWidth;
       this.zoneLabelEl.classList.add('z-flash');
       this.cameras.main.flash(400, 255, 215, 0);
-      this.time.delayedCall(1400, () => this.scene.restart());
+      this.fireworks();
+      this.time.delayedCall(1600, () => this.endCard.show(this.milestonesHit, 12, this.score));
+    }
+  }
+
+  private updateTracker(): void {
+    const el = document.getElementById('tracker-stars');
+    if (!el) return;
+    const filled = '*'.repeat(this.milestonesHit);
+    const empty = '*'.repeat(12 - this.milestonesHit);
+    el.textContent = '';
+    if (filled.length) {
+      const f = document.createElement('span');
+      f.className = 'filled';
+      f.textContent = filled;
+      el.appendChild(f);
+    }
+    if (empty.length) {
+      const e = document.createElement('span');
+      e.className = 'empty';
+      e.textContent = empty;
+      el.appendChild(e);
+    }
+  }
+
+  private showFanfare(text: string): void {
+    const existing = document.getElementById('fanfare');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.id = 'fanfare';
+    const t = document.createElement('div');
+    t.className = 'fan-text';
+    t.textContent = text;
+    el.appendChild(t);
+    document.body.appendChild(el);
+    this.time.delayedCall(1800, () => el.remove());
+  }
+
+  private fireworks(): void {
+    const cam = this.cameras.main;
+    const colors = ['#ffd700', '#ff8888', '#88ddff', '#ff77ff', '#88ff88'];
+    for (let i = 0; i < 24; i++) {
+      this.time.delayedCall(i * 50, () => {
+        const fx = cam.scrollX + Phaser.Math.Between(40, cam.width - 40);
+        const fy = cam.scrollY + Phaser.Math.Between(40, cam.height / 2);
+        const c = colors[i % colors.length];
+        for (let j = 0; j < 8; j++) {
+          const angle = (j / 8) * Math.PI * 2;
+          const t = this.add.text(fx, fy, '*', {
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '12px',
+            color: c,
+            stroke: '#000000',
+            strokeThickness: 2
+          }).setOrigin(0.5).setDepth(900);
+          this.tweens.add({
+            targets: t,
+            x: fx + Math.cos(angle) * 40,
+            y: fy + Math.sin(angle) * 40,
+            alpha: 0,
+            duration: 700,
+            ease: 'Cubic.Out',
+            onComplete: () => t.destroy()
+          });
+        }
+      });
     }
   }
 
@@ -335,12 +434,14 @@ export class World1Scene extends Phaser.Scene {
 
     if (tier === this.currentTier) return;
     const grew = this.currentTier !== '' && TIER_HERO_SCALE[tier] > TIER_HERO_SCALE[this.currentTier];
+    const isFirst = this.currentTier === '';
     this.currentTier = tier;
     this.cameras.main.setBackgroundColor(TIER_BG[tier]);
     this.zoneLabelEl.textContent = label;
     this.zoneLabelEl.classList.remove('z-flash');
     void this.zoneLabelEl.offsetWidth;
     this.zoneLabelEl.classList.add('z-flash');
+    if (!isFirst) this.showFanfare(`WORLD: ${label}`);
 
     const targetScale = TIER_HERO_SCALE[tier];
     if (grew) {
@@ -371,12 +472,17 @@ export class World1Scene extends Phaser.Scene {
     if (stomp) {
       slime.disableBody(true, true);
       this.hero.setVelocityY(-260);
-      this.score += 100;
-      this.popText('+100', slime.x, slime.y - 10, '#ffd700');
-      this.cameras.main.shake(80, 0.003);
+      this.airComboCount++;
+      const bonus = this.airComboCount === 1 ? 100 : this.airComboCount === 2 ? 200 : this.airComboCount === 3 ? 400 : 800;
+      this.score += bonus;
+      const label = this.airComboCount === 1 ? `+${bonus}` : this.airComboCount === 2 ? `DOUBLE +${bonus}` : this.airComboCount === 3 ? `TRIPLE +${bonus}` : `MEGA +${bonus}`;
+      const color = this.airComboCount >= 3 ? '#ff77ff' : this.airComboCount === 2 ? '#88ddff' : '#ffd700';
+      this.popText(label, slime.x, slime.y - 10, color);
+      this.cameras.main.shake(60 + this.airComboCount * 30, 0.003 + this.airComboCount * 0.001);
     } else {
       this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 32);
       this.hero.setVelocity(0, 0);
+      this.airComboCount = 0;
       this.popText('OUCH', this.hero.x, this.hero.y - 12, '#ff5555');
       this.cameras.main.flash(200, 255, 60, 60);
       slimeBody.velocity.x = -30;
@@ -414,17 +520,25 @@ export class World1Scene extends Phaser.Scene {
 
     this.tweens.add({ targets: block, y: block.y - 4, duration: 80, yoyo: true });
 
-    const coin = this.add.image(block.x, block.y - 4, 'coin').setDepth(700);
-    this.tweens.add({
-      targets: coin,
-      y: block.y - 36,
-      alpha: 0,
-      duration: 500,
-      ease: 'Cubic.Out',
-      onComplete: () => coin.destroy()
-    });
+    for (let i = 0; i < 6; i++) {
+      const coin = this.add.image(block.x, block.y - 4, 'coin').setDepth(700);
+      const angle = -Math.PI / 2 + (i - 2.5) * 0.35;
+      const dx = Math.cos(angle) * 60;
+      const dy = Math.sin(angle) * 60;
+      this.tweens.add({
+        targets: coin,
+        x: block.x + dx,
+        y: block.y + dy,
+        alpha: 0,
+        scale: 0.5,
+        duration: 600,
+        delay: i * 30,
+        ease: 'Cubic.Out',
+        onComplete: () => coin.destroy()
+      });
+    }
     this.popText('+200', block.x, block.y - 8, '#ffd700');
-    this.cameras.main.shake(60, 0.002);
+    this.cameras.main.shake(80, 0.003);
 
     const milestone = ALL_MILESTONES[id];
     this.time.delayedCall(280, () => {
