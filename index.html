@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>SUPER AHINOAM</title>
+    <link rel="icon" href="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'&gt;&lt;rect width='16' height='16' fill='%23d8951a'/&gt;&lt;text x='8' y='12' font-family='monospace' font-size='10' text-anchor='middle' fill='%23fff'&gt;?&lt;/text&gt;&lt;/svg&gt;" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -245,6 +249,92 @@
         #zone-label { font-size: 14px; }
       }
 
+      #mobile-gate {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: none;
+        text-align: center;
+        font-family: "Press Start 2P", monospace;
+        color: #fff;
+        background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 70%, #c2845a 70%, #c2845a 85%, #6b3410 85%, #6b3410 100%);
+        overflow: hidden;
+      }
+      #mobile-gate.show { display: block; }
+      #mobile-gate .mg-sky { position: absolute; inset: 0; pointer-events: none; }
+      #mobile-gate .mg-stack {
+        position: relative;
+        z-index: 3;
+        padding: 14vh 20px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      #mobile-gate .mg-title {
+        font-size: clamp(40px, 11vw, 72px);
+        color: #ffd700;
+        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 6px 6px 0 rgba(0,0,0,0.4);
+        letter-spacing: 4px;
+        line-height: 1;
+        animation: e-shake 600ms ease-out;
+      }
+      #mobile-gate .mg-name {
+        font-size: clamp(34px, 9vw, 56px);
+        color: #fff;
+        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+        letter-spacing: 3px;
+        line-height: 1;
+      }
+      #mobile-gate .mg-msg {
+        font-size: clamp(13px, 3.4vw, 18px);
+        max-width: 520px;
+        line-height: 1.7;
+        text-shadow: 2px 2px 0 #000;
+        margin-top: 10px;
+        letter-spacing: 1px;
+      }
+      #mobile-gate .mg-msg strong { color: #ffd700; }
+      #mobile-gate .mg-coins {
+        display: flex;
+        gap: 14px;
+        margin-top: 6px;
+      }
+      #mobile-gate .mg-links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 18px;
+      }
+      #mobile-gate .mg-links a {
+        font-size: clamp(11px, 3vw, 14px);
+        color: #ffd700;
+        text-decoration: none;
+        text-shadow: 2px 2px 0 #000;
+        border: 2px solid #000;
+        background: rgba(0, 0, 0, 0.55);
+        padding: 12px 18px;
+        letter-spacing: 1px;
+      }
+      #mobile-gate .mg-foot {
+        position: absolute;
+        bottom: 14px;
+        left: 0;
+        right: 0;
+        font-size: 10px;
+        color: #fff;
+        text-shadow: 2px 2px 0 #000;
+        z-index: 4;
+      }
+      #mobile-gate .mg-ground {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 15%;
+        background:
+          linear-gradient(#5a2a08 1px, transparent 1px) 0 0/100% 8px,
+          linear-gradient(90deg, #5a2a08 1px, transparent 1px) 0 0/8px 8px,
+          #6b3410;
+      }
+
       #milestone-modal {
         position: fixed;
         inset: 0;
@@ -333,8 +423,9 @@
         position: fixed;
         inset: 0;
         z-index: 60;
-        display: grid;
-        place-items: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-family: "Press Start 2P", monospace;
         color: #fff;
         overflow-y: auto;
@@ -346,126 +437,170 @@
       }
       #end-card .e-card {
         position: relative;
-        width: min(720px, 94vw);
+        width: min(1100px, 96vw);
         text-align: center;
-        padding: 30px 26px 22px;
+        padding: 24px 36px 24px;
+        z-index: 1;
       }
       #end-card .e-headline {
-        font-size: 64px;
+        font-size: min(clamp(48px, 9vw, 110px), 14vh);
         color: #ffd700;
-        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 8px 8px 0 rgba(0,0,0,0.4);
-        letter-spacing: 4px;
+        text-shadow: 6px 6px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 12px 12px 0 rgba(0,0,0,0.45);
+        letter-spacing: 6px;
         margin-bottom: 14px;
-        animation: e-shake 600ms ease-out;
+        animation: e-shake 700ms ease-out;
+        line-height: 1;
       }
       @keyframes e-shake {
-        0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
-        50% { transform: scale(1.15) rotate(2deg); opacity: 1; }
+        0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+        50% { transform: scale(1.18) rotate(3deg); opacity: 1; }
         100% { transform: scale(1) rotate(0); opacity: 1; }
       }
       #end-card .e-sub {
-        font-size: 13px;
-        text-shadow: 2px 2px 0 #000;
+        font-size: clamp(13px, 1.5vw, 18px);
+        text-shadow: 3px 3px 0 #000;
         margin-bottom: 18px;
+        letter-spacing: 2px;
       }
       #end-card .e-score {
-        font-size: 22px;
+        font-size: min(clamp(26px, 3.6vw, 40px), 6vh);
         color: #ffd700;
-        text-shadow: 3px 3px 0 #000;
-        margin-bottom: 6px;
-        letter-spacing: 3px;
+        text-shadow: 4px 4px 0 #000;
+        margin-bottom: 8px;
+        letter-spacing: 5px;
       }
       #end-card .e-stats {
-        font-size: 14px;
+        font-size: clamp(15px, 1.8vw, 20px);
         color: #fff;
-        text-shadow: 2px 2px 0 #000;
-        margin-bottom: 8px;
-      }
-      #end-card .e-arc {
-        font-size: 10px;
-        color: #ffd56b;
-        text-shadow: 2px 2px 0 #000;
-        margin-bottom: 16px;
-        letter-spacing: 1px;
-      }
-      #end-card .e-detail {
-        font-family: monospace;
-        font-size: 14px;
-        line-height: 1.55;
-        color: #fff;
-        background: rgba(0, 0, 0, 0.5);
-        border: 2px solid #000;
-        padding: 14px 16px;
-        margin: 0 auto 20px;
-        max-width: 600px;
-        text-align: left;
-      }
-      #end-card .e-links {
-        display: flex;
-        gap: 14px;
-        justify-content: center;
-        margin-bottom: 22px;
-        flex-wrap: wrap;
-      }
-      #end-card .e-links a {
-        font-size: 11px;
-        color: #ffd700;
-        text-decoration: none;
-        text-shadow: 2px 2px 0 #000;
-        border: 2px solid #000;
-        background: rgba(0, 0, 0, 0.55);
-        padding: 10px 16px;
-      }
-      #end-card .e-links a:hover {
-        background: rgba(0, 0, 0, 0.85);
-        transform: translateY(-2px);
-        transition: transform 100ms;
-      }
-      #end-card .e-restart {
-        font-family: "Press Start 2P", monospace;
-        font-size: 13px;
-        color: #fff;
-        background: transparent;
-        border: none;
         text-shadow: 3px 3px 0 #000;
-        cursor: pointer;
-        animation: blink 1.2s steps(2) infinite;
-        margin-bottom: 24px;
-      }
-      #end-card .e-credits {
-        margin-top: 14px;
-        padding-top: 16px;
-        border-top: 2px dashed rgba(255, 255, 255, 0.4);
-      }
-      #end-card .e-credits-title {
-        font-size: 10px;
-        color: #ffd700;
-        text-shadow: 2px 2px 0 #000;
         margin-bottom: 8px;
         letter-spacing: 2px;
       }
+      #end-card .e-arc {
+        font-size: clamp(11px, 1.2vw, 15px);
+        color: #ffd56b;
+        text-shadow: 2px 2px 0 #000;
+        margin-bottom: 16px;
+        letter-spacing: 2px;
+      }
+      #end-card .e-detail {
+        font-family: monospace;
+        font-size: clamp(14px, 1.4vw, 18px);
+        line-height: 1.55;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.55);
+        border: 3px solid #000;
+        padding: 16px 22px;
+        margin: 0 auto 22px;
+        max-width: 880px;
+        text-align: left;
+        box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
+      }
+      #end-card .e-links {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+      }
+      #end-card .e-links a {
+        font-size: clamp(13px, 1.4vw, 17px);
+        color: #ffd700;
+        text-decoration: none;
+        text-shadow: 3px 3px 0 #000;
+        border: 3px solid #000;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 16px 24px;
+        letter-spacing: 1px;
+        box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+        transition: transform 100ms, box-shadow 100ms;
+      }
+      #end-card .e-links a:hover {
+        background: rgba(0, 0, 0, 0.85);
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 rgba(0,0,0,0.6);
+      }
+      #end-card .e-restart {
+        font-family: "Press Start 2P", monospace;
+        font-size: clamp(15px, 1.6vw, 20px);
+        color: #fff;
+        background: transparent;
+        border: none;
+        text-shadow: 4px 4px 0 #000;
+        cursor: pointer;
+        animation: blink 1.2s steps(2) infinite;
+        margin-bottom: 20px;
+        letter-spacing: 3px;
+      }
+      #end-card .e-credits {
+        margin-top: 12px;
+        padding-top: 14px;
+        border-top: 3px dashed rgba(255, 255, 255, 0.45);
+      }
+      #end-card .e-credits-title {
+        font-size: clamp(12px, 1.3vw, 16px);
+        color: #ffd700;
+        text-shadow: 3px 3px 0 #000;
+        margin-bottom: 12px;
+        letter-spacing: 3px;
+      }
       #end-card .e-credits-body {
         font-family: monospace;
-        font-size: 12px;
-        line-height: 1.5;
+        font-size: clamp(13px, 1.3vw, 16px);
+        line-height: 1.6;
         color: #fff;
         text-shadow: 2px 2px 0 #000;
         opacity: 0.95;
+        max-width: 760px;
+        margin: 0 auto;
       }
       #end-card .e-credits-body a {
         color: #ffd700;
         text-decoration: underline;
       }
-      @media (max-height: 720px) {
-        #end-card .e-headline { font-size: 44px; }
-        #end-card .e-card { padding: 18px 20px 14px; }
-        #end-card .e-detail { font-size: 12px; padding: 10px 12px; }
+      @media (max-height: 640px) {
+        #end-card .e-card { padding: 20px 18px 16px; }
+        #end-card .e-detail { padding: 14px 16px; margin-bottom: 18px; }
+        #end-card .e-headline { margin-bottom: 10px; }
+        #end-card .e-sub { margin-bottom: 14px; }
+        #end-card .e-score { margin-bottom: 6px; }
+        #end-card .e-arc { margin-bottom: 14px; }
+        #end-card .e-restart { margin-bottom: 18px; }
       }
 
     </style>
-    <script type="module" crossorigin src="/assets/index-BhASO_hh.js"></script>
+    <script type="module" crossorigin src="/assets/index-C4G4L3zr.js"></script>
   </head>
   <body>
+    <div id="mobile-gate">
+      <div class="mg-sky">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+        <div class="hill hill-1"></div>
+        <div class="hill hill-2"></div>
+      </div>
+      <div class="mg-stack">
+        <div class="mg-title">SUPER</div>
+        <div class="mg-name">AHINOAM</div>
+        <div class="mg-coins">
+          <span class="coin"></span>
+          <span class="coin"></span>
+          <span class="coin"></span>
+        </div>
+        <div class="mg-msg">
+          THIS IS A <strong>KEYBOARD</strong> GAME.<br/>
+          OPEN ON A <strong>DESKTOP</strong> FOR<br/>THE FULL EXPERIENCE.
+        </div>
+        <div class="mg-links">
+          <a href="https://www.linkedin.com/in/ahinoam-balgaly/" target="_blank" rel="noopener noreferrer">LINKEDIN</a>
+          <a href="mailto:ahinoam@balgaly.com">EMAIL</a>
+          <a href="cv.pdf" target="_blank" rel="noopener noreferrer">CV</a>
+        </div>
+      </div>
+      <div class="mg-ground"></div>
+      <div class="mg-foot">(c) 2026 &middot; AHINOAM BALGALY &middot; PRODUCT MANAGER</div>
+    </div>
     <div id="game"></div>
     <div id="title-overlay">
       <div class="t-sky">
