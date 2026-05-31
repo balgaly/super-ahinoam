@@ -27,14 +27,14 @@ interface MilestonePlacement {
 
 const PLACEMENTS: MilestonePlacement[] = [
   { tile: 18, id: 'flying_carpet' },
-  { tile: 20, id: 'imaginarium' },
-  { tile: 22, id: 'iplan' },
-  { tile: 24, id: 'dermador' },
+  { tile: 21, id: 'imaginarium' },
+  { tile: 24, id: 'iplan' },
+  { tile: 27, id: 'dermador' },
 
   { tile: 40, id: 'shaldag' },
-  { tile: 42, id: 'levi_trucks' },
+  { tile: 43, id: 'levi_trucks' },
 
-  { tile: 65, id: 'se_ops_clients' },
+  { tile: 64, id: 'se_ops_clients' },
   { tile: 67, id: 'se_ops_reports' },
 
   { tile: 105, id: 'se_pm_step_up' },
@@ -378,7 +378,7 @@ export class World1Scene extends Phaser.Scene {
         ease: 'Cubic.Out'
       });
       this.fireworks();
-      this.time.delayedCall(2400, () => this.endCard.show(this.milestonesHit, 14, this.score));
+      this.time.delayedCall(4800, () => this.endCard.show(this.milestonesHit, 14, this.score));
     }
   }
 
