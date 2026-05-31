@@ -25,7 +25,7 @@ if (isMobileLike()) {
     backgroundColor: '#5c94fc',
     pixelArt: true,
     scale: {
-      mode: Phaser.Scale.FIT,
+      mode: Phaser.Scale.ENVELOP,
       autoCenter: Phaser.Scale.CENTER_BOTH,
       width: 384,
       height: 240

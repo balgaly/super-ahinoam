@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { MilestoneModal } from '../ui/MilestoneModal';
 import { EndCard } from '../ui/EndCard';
 import { ALL_MILESTONES } from '../milestones';
+import { glyphDataUri } from '../ui/glyphs';
 
 const TILE = 16;
 const LEVEL_TILES_W = 200;
@@ -184,14 +185,14 @@ export class World1Scene extends Phaser.Scene {
 
     const signX = princessX;
     const signY = groundY - 84;
-    const signBg = this.add.rectangle(signX, signY, 132, 38, 0xfdf6e3).setStrokeStyle(3, 0x000000).setDepth(7);
+    const signBg = this.add.rectangle(signX, signY, 168, 38, 0xfdf6e3).setStrokeStyle(3, 0x000000).setDepth(7);
     const signLine1 = this.add.text(signX, signY - 8, 'YOU SAVED', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '8px',
       color: '#1a1a1a',
       resolution: 2
     }).setOrigin(0.5).setDepth(8);
-    const signLine2 = this.add.text(signX, signY + 6, 'THE PM!', {
+    const signLine2 = this.add.text(signX, signY + 6, 'THE RECRUITER!', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '8px',
       color: '#c8842a',
@@ -267,7 +268,7 @@ export class World1Scene extends Phaser.Scene {
     };
     this.events.once('shutdown', cleanup);
     this.events.once('destroy', cleanup);
-    this.updateTracker();
+    this.buildRail();
   }
 
   update(): void {
@@ -351,7 +352,6 @@ export class World1Scene extends Phaser.Scene {
     if (this.metricsEl) {
       this.metricsEl.textContent = `score ${this.score.toLocaleString()} | tier ${this.currentTier}`;
     }
-    this.updateTracker();
 
     if (this.hero.y > LEVEL_H + 64) {
       this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 32);
@@ -385,26 +385,31 @@ export class World1Scene extends Phaser.Scene {
     }
   }
 
-  private updateTracker(): void {
-    const el = document.getElementById('tracker-stars');
+  private buildRail(): void {
+    const el = document.getElementById('tracker-rail');
     if (!el) return;
-    const total = 14;
-    const hit = Math.min(this.milestonesHit, total);
-    const filled = '*'.repeat(hit);
-    const empty = '*'.repeat(total - hit);
     el.textContent = '';
-    if (filled.length) {
-      const f = document.createElement('span');
-      f.className = 'filled';
-      f.textContent = filled;
-      el.appendChild(f);
-    }
-    if (empty.length) {
-      const e = document.createElement('span');
-      e.className = 'empty';
-      e.textContent = empty;
-      el.appendChild(e);
-    }
+    PLACEMENTS.forEach(p => {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.dataset.mid = p.id;
+      el.appendChild(slot);
+    });
+  }
+
+  private collectMilestone(id: string): void {
+    const el = document.getElementById('tracker-rail');
+    if (!el) return;
+    const slot = el.querySelector<HTMLDivElement>(`.slot[data-mid="${id}"]`);
+    if (!slot || slot.classList.contains('filled')) return;
+    const img = document.createElement('img');
+    img.src = glyphDataUri(id);
+    img.alt = ALL_MILESTONES[id]?.company ?? '';
+    slot.appendChild(img);
+    slot.classList.add('filled');
+    slot.classList.remove('pop');
+    void slot.offsetWidth;
+    slot.classList.add('pop');
   }
 
   private showFanfare(text: string): void {
@@ -608,7 +613,7 @@ export class World1Scene extends Phaser.Scene {
 
     const milestone = ALL_MILESTONES[id];
     this.time.delayedCall(280, () => {
-      this.modal.show(milestone, () => {});
+      this.modal.show(milestone, () => this.collectMilestone(id));
     });
   }
 }

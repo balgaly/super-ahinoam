@@ -1,1 +1,1 @@
-{"root":["./src/main.ts","./src/milestones.ts","./src/vite-env.d.ts","./src/scenes/bootscene.ts","./src/scenes/titlescene.ts","./src/scenes/world1scene.ts","./src/ui/endcard.ts","./src/ui/milestonemodal.ts"],"version":"5.9.3"}
+{"root":["./src/main.ts","./src/milestones.ts","./src/vite-env.d.ts","./src/scenes/bootscene.ts","./src/scenes/titlescene.ts","./src/scenes/world1scene.ts","./src/ui/endcard.ts","./src/ui/milestonemodal.ts","./src/ui/glyphs.ts"],"version":"5.9.3"}
