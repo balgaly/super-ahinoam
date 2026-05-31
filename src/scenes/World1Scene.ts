@@ -95,6 +95,7 @@ export class World1Scene extends Phaser.Scene {
   private slimes!: Phaser.Physics.Arcade.Group;
   private score = 0;
   private airComboCount = 0;
+  private growing = false;
 
   constructor() {
     super('World1');
@@ -108,6 +109,7 @@ export class World1Scene extends Phaser.Scene {
     this.milestonesHit = 0;
     this.score = 0;
     this.airComboCount = 0;
+    this.growing = false;
     this.currentTier = '';
     this.modalWasOpen = false;
     this.clouds = [];
@@ -273,6 +275,7 @@ export class World1Scene extends Phaser.Scene {
     const justClosed = this.modalWasOpen && !modalOpen;
     this.modalWasOpen = modalOpen;
     if (modalOpen) return;
+    if (this.growing) return;
     if (justClosed) {
       this.jumpBufferCounter = 0;
       this.keys.jump.reset();
@@ -499,6 +502,11 @@ export class World1Scene extends Phaser.Scene {
 
     const targetScale = TIER_HERO_SCALE[tier];
     if (grew) {
+      this.growing = true;
+      this.hero.setVelocity(0, 0);
+      this.hero.setAcceleration(0, 0);
+      this.physics.world.pause();
+      this.slimes.getChildren().forEach(s => (s as Phaser.Physics.Arcade.Sprite).anims?.pause());
       this.tweens.add({
         targets: this.hero,
         scale: targetScale * 1.15,
@@ -508,6 +516,9 @@ export class World1Scene extends Phaser.Scene {
         onComplete: () => {
           this.hero.setScale(targetScale);
           this.hero.body!.setSize(16, 28).setOffset(4, 3);
+          this.physics.world.resume();
+          this.slimes.getChildren().forEach(s => (s as Phaser.Physics.Arcade.Sprite).anims?.resume());
+          this.growing = false;
         }
       });
       this.popText('LEVEL UP!', this.hero.x, this.hero.y - 30, '#ffd700');
