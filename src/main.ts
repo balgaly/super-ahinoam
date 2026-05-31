@@ -4,10 +4,9 @@ import { TitleScene } from './scenes/TitleScene';
 import { World1Scene } from './scenes/World1Scene';
 
 function isMobileLike(): boolean {
+  const narrow = window.innerWidth < 900;
   const coarse = window.matchMedia('(pointer: coarse)').matches;
-  const narrow = window.innerWidth < 1000;
-  const noKb = !window.matchMedia('(hover: hover)').matches;
-  return (coarse && narrow) || (coarse && noKb);
+  return narrow && coarse;
 }
 
 if (isMobileLike()) {
