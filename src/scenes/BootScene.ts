@@ -18,6 +18,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hill', 'assets/sprites/hill.png');
     this.load.image('flagpole', 'assets/sprites/flagpole.png');
     this.load.image('flag', 'assets/sprites/flag.png');
+    this.load.image('princess_idle', 'assets/sprites/princess_idle.png');
+    this.load.spritesheet('princess_bob', 'assets/sprites/princess_bob.png', { frameWidth: 24, frameHeight: 32 });
     this.load.spritesheet('slime', 'assets/sprites/slime.png', { frameWidth: 16, frameHeight: 16 });
 
     const g = this.add.graphics();

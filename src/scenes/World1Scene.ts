@@ -84,6 +84,8 @@ export class World1Scene extends Phaser.Scene {
   private endCard!: EndCard;
   private flagpole!: Phaser.GameObjects.Image;
   private flag!: Phaser.GameObjects.Image;
+  private princess!: Phaser.GameObjects.Sprite;
+  private signText!: Phaser.GameObjects.Container;
   private endTriggered = false;
   private zoneLabelEl!: HTMLDivElement;
   private currentTier = '';
@@ -129,29 +131,33 @@ export class World1Scene extends Phaser.Scene {
       this.ground.create(x * TILE + TILE / 2, groundY + TILE * 1.5, 'ground').refreshBody();
     }
 
+    const tierAt = (tx: number): 'drive-by' | 'mid' | 'climax' => tx >= 100 ? 'climax' : tx >= 55 ? 'mid' : 'drive-by';
+    const TIER_PLATFORM_LIFT: Record<string, number> = { 'drive-by': 0, 'mid': 16, 'climax': 32 };
     const platforms: Array<[number, number, number]> = [
       [10, 5, 3],
-      [33, 4, 2],
-      [55, 6, 3],
-      [80, 5, 2],
-      [88, 7, 4],
-      [97, 5, 4],
-      [115, 5, 3],
-      [125, 7, 3],
-      [137, 6, 4],
-      [155, 5, 3],
-      [175, 6, 3]
+      [33, 6, 2],
+      [50, 4, 2],
+      [60, 7, 3],
+      [78, 5, 2],
+      [90, 8, 3],
+      [108, 6, 2],
+      [122, 9, 3],
+      [142, 7, 3],
+      [157, 5, 2],
+      [180, 8, 3]
     ];
     platforms.forEach(([tx, height, len]) => {
-      const py = groundY - height * TILE;
+      const lift = TIER_PLATFORM_LIFT[tierAt(tx)];
+      const py = groundY - height * TILE - lift;
       for (let i = 0; i < len; i++) {
         this.ground.create((tx + i) * TILE + TILE / 2, py, 'brick').refreshBody();
       }
     });
 
-    const blockY = groundY - TILE * 4;
     PLACEMENTS.forEach(p => {
       const m = ALL_MILESTONES[p.id];
+      const lift = TIER_PLATFORM_LIFT[tierAt(p.tile)];
+      const blockY = groundY - TILE * 4 - lift;
       const block = this.milestoneBlocks.create(p.tile * TILE + TILE / 2, blockY + TILE / 2, 'qblock') as Phaser.Physics.Arcade.Sprite;
       block.refreshBody();
       block.setData('isMilestone', true);
@@ -161,6 +167,35 @@ export class World1Scene extends Phaser.Scene {
 
     this.flagpole = this.add.image(LEVEL_W - 8 * TILE, groundY - 144, 'flagpole').setOrigin(0, 0);
     this.flag = this.add.image(this.flagpole.x + 5, this.flagpole.y + 8, 'flag').setOrigin(0, 0).setDepth(5);
+
+    if (!this.anims.exists('princess-bob')) {
+      this.anims.create({
+        key: 'princess-bob',
+        frames: this.anims.generateFrameNumbers('princess_bob', { start: 0, end: 2 }),
+        frameRate: 3,
+        repeat: -1
+      });
+    }
+    const princessX = this.flagpole.x + 4 * TILE;
+    this.princess = this.add.sprite(princessX, groundY - 16, 'princess_idle').setOrigin(0.5, 0.5).setScale(1.7).setDepth(8);
+    this.princess.play('princess-bob');
+
+    const signX = princessX;
+    const signY = groundY - 84;
+    const signBg = this.add.rectangle(signX, signY, 132, 38, 0xfdf6e3).setStrokeStyle(3, 0x000000).setDepth(7);
+    const signLine1 = this.add.text(signX, signY - 8, 'YOU SAVED', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: '#1a1a1a',
+      resolution: 2
+    }).setOrigin(0.5).setDepth(8);
+    const signLine2 = this.add.text(signX, signY + 6, 'THE PM!', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: '#c8842a',
+      resolution: 2
+    }).setOrigin(0.5).setDepth(8);
+    this.signText = this.add.container(0, 0, [signBg, signLine1, signLine2]).setDepth(7).setAlpha(0);
 
     if (!this.anims.exists('hero-walk')) {
       this.anims.create({
@@ -335,8 +370,15 @@ export class World1Scene extends Phaser.Scene {
         duration: 900,
         ease: 'Cubic.In'
       });
+      this.tweens.add({
+        targets: this.signText,
+        alpha: 1,
+        duration: 600,
+        delay: 800,
+        ease: 'Cubic.Out'
+      });
       this.fireworks();
-      this.time.delayedCall(2200, () => this.endCard.show(this.milestonesHit, 14, this.score));
+      this.time.delayedCall(2400, () => this.endCard.show(this.milestonesHit, 14, this.score));
     }
   }
 
