@@ -31,6 +31,10 @@ export const GLYPHS: Record<string, string> = {
   se_ops_clients:
     '<circle cx="5" cy="5" r="2" fill="#fff"/><circle cx="11" cy="5" r="2" fill="#ffd700"/><path d="M2 13 Q5 8 8 13 Z" fill="#fff"/><path d="M8 13 Q11 8 14 13 Z" fill="#ffd700"/>',
 
+  // SE Ops billing fix -> receipt with checkmark (recovered billable events)
+  se_ops_billing:
+    '<rect x="3" y="2" width="10" height="12" fill="#fff"/><path d="M3 14 l1.6 -1.2 1.6 1.2 1.6 -1.2 1.6 1.2 1.6 -1.2 1.4 1.2 V2 H3 Z" fill="#fff"/><rect x="5" y="4.5" width="6" height="1" fill="#bbb"/><rect x="5" y="6.5" width="4" height="1" fill="#bbb"/><path d="M5 10 L7 12 L11 7.5" stroke="#2aa84a" stroke-width="1.6" fill="none"/>',
+
   // SE Ops reports -> bar chart
   se_ops_reports:
     '<rect x="2" y="9" width="3" height="5" fill="#6bd0ff"/><rect x="6.5" y="6" width="3" height="8" fill="#ffd700"/><rect x="11" y="3" width="3" height="11" fill="#8aff8a"/>',

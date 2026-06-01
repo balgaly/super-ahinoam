@@ -68,8 +68,17 @@ export const ALL_MILESTONES: Record<string, Milestone> = {
     company: 'StreamElements — Operations',
     role: 'Operations Team Member',
     dates: 'Mar 2021 — Sep 2022',
-    metric: '3-6 concurrent clients · $50k-$1M budgets',
-    detail: 'Managed creator campaign operations across 3-6 concurrent clients with budgets from ~$50k to $1M, including HelloFresh, Plarium, Scopely, and Lilith Games. Coordinated directly with CS, Creator Managers, and clients on budget progress and operational reporting.',
+    metric: '3-6 concurrent clients · $50k-$2M budgets',
+    detail: 'Managed creator campaign operations across 3-6 concurrent clients with budgets from ~$50k to $2M, including HelloFresh, Plarium, Scopely, and Lilith Games. Coordinated directly with CS, Creator Managers, and clients on budget progress and operational reporting.',
+    tier: 'mid'
+  },
+  se_ops_billing: {
+    id: 'se_ops_billing',
+    company: 'StreamElements — Operations',
+    role: 'Operations Team Member',
+    dates: 'Mar 2021 — Sep 2022',
+    metric: 'Fixed undercounted billable events',
+    detail: 'Found and corrected reporting logic that was leaving billable events out of client reports. The fix restored accurate revenue visibility — money that had been quietly going uncounted now showed up where it belonged.',
     tier: 'mid'
   },
   se_ops_reports: {
@@ -78,7 +87,7 @@ export const ALL_MILESTONES: Record<string, Milestone> = {
     role: 'Operations Team Member',
     dates: 'Mar 2021 — Sep 2022',
     metric: '~4 hrs/week saved per client',
-    detail: 'Produced client spend reports twice weekly and corrected reporting logic that undercounted billable events. Improved revenue visibility and saved ~4 hrs/week per client through automated reports — the bug that, once fixed, paid for itself every week forever.',
+    detail: 'Automated the recurring client spend reports that had been produced by hand twice a week. Saved ~4 hrs/week per client and freed the team from repetitive reporting — work that paid for itself every week thereafter.',
     tier: 'mid'
   },
   se_pm_step_up: {
