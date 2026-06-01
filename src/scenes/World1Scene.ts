@@ -508,6 +508,7 @@ export class World1Scene extends Phaser.Scene {
     const targetScale = TIER_HERO_SCALE[tier];
     if (grew) {
       this.growing = true;
+      const footY = (this.hero.body as Phaser.Physics.Arcade.Body).bottom;
       this.hero.setVelocity(0, 0);
       this.hero.setAcceleration(0, 0);
       this.physics.world.pause();
@@ -521,6 +522,11 @@ export class World1Scene extends Phaser.Scene {
         onComplete: () => {
           this.hero.setScale(targetScale);
           this.hero.body!.setSize(16, 28).setOffset(4, 3);
+          // Re-anchor so the (now taller) body keeps its feet on the same
+          // ground line — otherwise center-origin growth buries the hero.
+          const body = this.hero.body as Phaser.Physics.Arcade.Body;
+          this.hero.y += footY - body.bottom;
+          body.updateFromGameObject();
           this.physics.world.resume();
           this.slimes.getChildren().forEach(s => (s as Phaser.Physics.Arcade.Sprite).anims?.resume());
           this.growing = false;
