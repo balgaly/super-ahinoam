@@ -133,16 +133,31 @@ export class World1Scene extends Phaser.Scene {
     this.groundY = groundY;
     const GROUND_ROWS = 3;
 
-    // Pit chasms — varied widths so they read as real gaps, not seams.
-    // Surface raised to row 12 means the hole now opens above the ENVELOP
-    // crop line and is actually visible.
+    // ---------------------------------------------------------------------
+    // MASTER LAYOUT — every feature gets a reserved tile range, nothing
+    // shares a column. Reading left to right the level tells the career arc:
+    //
+    //  tile  0..54  DRIVE-BY (early career)   tile 55..99 MID (operations)
+    //  tile 100..199 CLIMAX (product)
+    //
+    //  Milestones (q-blocks): 18 21 24 27 | 40 43 | 64 67 |
+    //                         105 118 132 146 160 174
+    //  Pipes:   31  55  96  128  164
+    //  Mesas:   47-50   108-111   150-153
+    //  Pits:    34-35  72  88-90  113-114  137-138  168-169
+    //  Bricks:  10-12  60-62  78-80  100-102  120-122  140-142  176-178
+    //  Stairs:  186-189   Flag: ~192
+    // ---------------------------------------------------------------------
+
+    // Pit chasms — varied widths. Surface raised to row 12 so the hole opens
+    // above the ENVELOP crop line and is actually visible.
     const pitRanges: Array<[number, number]> = [
-      [37, 38],       // 2-wide
-      [70, 70],       // 1-wide nibble
-      [85, 87],       // 3-wide chasm
-      [100, 101],     // 2-wide
-      [134, 136],     // 3-wide chasm
-      [168, 169]      // 2-wide
+      [34, 35],
+      [72, 72],
+      [88, 90],
+      [113, 114],
+      [137, 138],
+      [168, 169]
     ];
     const gaps = new Set<number>();
     pitRanges.forEach(([a, b]) => { for (let x = a; x <= b; x++) gaps.add(x); });
@@ -155,12 +170,12 @@ export class World1Scene extends Phaser.Scene {
       }
     }
 
-    // Raised mesas — solid ground steps you climb onto and drop off.
-    // [startTile, lengthTiles, heightTiles] sitting on the base surface.
+    // Raised mesas — solid ground steps, in the gaps between milestone
+    // clusters. [startTile, lengthTiles, heightTiles].
     const mesas: Array<[number, number, number]> = [
-      [44, 6, 2],
-      [108, 7, 3],
-      [150, 5, 2]
+      [47, 4, 2],
+      [108, 4, 3],
+      [150, 4, 2]
     ];
     mesas.forEach(([tx, len, h]) => {
       for (let i = 0; i < len; i++) {
@@ -170,12 +185,12 @@ export class World1Scene extends Phaser.Scene {
       }
     });
 
-    // Warp pipes — jump-over obstacles. [tile, heightTiles]; pipe is 2 wide.
+    // Warp pipes — jump-over obstacles, parked in open stretches. 2 tiles wide.
     const pipes: Array<[number, number]> = [
-      [28, 2],
-      [56, 3],
+      [31, 2],
+      [55, 3],
       [96, 2],
-      [126, 4],
+      [128, 3],
       [164, 3]
     ];
     pipes.forEach(([tx, h]) => this.buildPipe(tx, h, groundY));
@@ -190,15 +205,16 @@ export class World1Scene extends Phaser.Scene {
 
     const tierAt = (tx: number): 'drive-by' | 'mid' | 'climax' => tx >= 100 ? 'climax' : tx >= 55 ? 'mid' : 'drive-by';
     const TIER_PLATFORM_LIFT: Record<string, number> = { 'drive-by': 0, 'mid': 16, 'climax': 32 };
+    // Brick platforms — jump shelves in the gaps, never sharing a column with
+    // a milestone q-block or a pipe. [startTile, heightTiles, lengthTiles].
     const platforms: Array<[number, number, number]> = [
-      [10, 5, 3],
-      [33, 6, 2],
-      [62, 4, 2],
+      [10, 4, 3],
+      [60, 4, 2],
       [78, 5, 2],
-      [90, 8, 3],
-      [122, 6, 2],
-      [138, 9, 3],
-      [178, 5, 2]
+      [100, 5, 2],
+      [120, 4, 2],
+      [140, 6, 3],
+      [176, 4, 2]
     ];
     platforms.forEach(([tx, height, len]) => {
       const lift = TIER_PLATFORM_LIFT[tierAt(tx)];
@@ -283,7 +299,7 @@ export class World1Scene extends Phaser.Scene {
         repeat: -1
       });
     }
-    const SLIME_TILES = [30, 50, 75, 92, 120, 145, 170, 182];
+    const SLIME_TILES = [25, 42, 78, 104, 122, 146, 158, 180];
     SLIME_TILES.forEach(tx => {
       const s = this.slimes.create(tx * TILE + TILE / 2, groundY - 8, 'slime') as Phaser.Physics.Arcade.Sprite;
       s.setCollideWorldBounds(true);
@@ -531,16 +547,24 @@ export class World1Scene extends Phaser.Scene {
       this.clouds.push(c);
     }
 
+    // Hills sit on the horizon in open-sky gaps between foreground clusters.
+    // Kept short (tops stay below the lowest brick platform) so they never
+    // rise into the q-block / platform band and read as blocking it. Anchored
+    // at world-tile x; parallax 0.45 still gives depth without large drift.
     const groundTop = LEVEL_H - TILE * 3;
-    for (let i = 0; i < 14; i++) {
-      const x = (i * 280 + 40) % (LEVEL_W + 200);
-      const big = i % 2 === 0;
-      const scale = big ? 2.2 : 1.4;
+    const hillSpots: Array<[number, number]> = [
+      // [tileX, scale] — placed in clear stretches, away from pipes/mesas
+      [5, 1.6], [15, 1.1], [38, 1.5], [52, 1.0],
+      [68, 1.6], [82, 1.1], [104, 1.5], [116, 1.0],
+      [134, 1.6], [148, 1.1], [172, 1.5], [182, 1.1]
+    ];
+    hillSpots.forEach(([tileX, scale]) => {
+      const x = tileX * TILE;
       const y = groundTop - (16 * scale);
       const h = this.add.image(x, y, 'hill').setOrigin(0, 0).setScrollFactor(0.45).setDepth(-80);
       h.setScale(scale);
       this.hills.push(h);
-    }
+    });
 
     cam.setBackgroundColor(TIER_BG['drive-by']);
   }
