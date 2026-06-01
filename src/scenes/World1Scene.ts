@@ -97,6 +97,7 @@ export class World1Scene extends Phaser.Scene {
   private score = 0;
   private airComboCount = 0;
   private growing = false;
+  private groundY = 0;
 
   constructor() {
     super('World1');
@@ -117,7 +118,10 @@ export class World1Scene extends Phaser.Scene {
     this.hills = [];
 
     this.cameras.main.setBounds(0, 0, LEVEL_W, LEVEL_H);
-    this.physics.world.setBounds(0, 0, LEVEL_W, LEVEL_H);
+    // World bounds extend well below the level so a hero who falls into a
+    // pit keeps dropping (past the camera view) and triggers respawn,
+    // instead of stopping on the world floor.
+    this.physics.world.setBounds(0, 0, LEVEL_W, LEVEL_H + 400);
     this.cameras.main.setBackgroundColor(TIER_BG['drive-by']);
 
     this.buildParallax();
@@ -125,13 +129,63 @@ export class World1Scene extends Phaser.Scene {
     this.ground = this.physics.add.staticGroup();
     this.milestoneBlocks = this.physics.add.staticGroup();
 
-    const groundY = LEVEL_H - TILE * 2;
+    const groundY = LEVEL_H - TILE * 3;
+    this.groundY = groundY;
+    const GROUND_ROWS = 3;
 
-    const gaps = new Set<number>([85, 86, 100, 101]);
+    // Pit chasms — varied widths so they read as real gaps, not seams.
+    // Surface raised to row 12 means the hole now opens above the ENVELOP
+    // crop line and is actually visible.
+    const pitRanges: Array<[number, number]> = [
+      [37, 38],       // 2-wide
+      [70, 70],       // 1-wide nibble
+      [85, 87],       // 3-wide chasm
+      [100, 101],     // 2-wide
+      [134, 136],     // 3-wide chasm
+      [168, 169]      // 2-wide
+    ];
+    const gaps = new Set<number>();
+    pitRanges.forEach(([a, b]) => { for (let x = a; x <= b; x++) gaps.add(x); });
+
+    // Base ground: 3 rows deep so cropped bottom still leaves visible depth.
     for (let x = 0; x < LEVEL_TILES_W; x++) {
       if (gaps.has(x)) continue;
-      this.ground.create(x * TILE + TILE / 2, groundY + TILE / 2, 'ground').refreshBody();
-      this.ground.create(x * TILE + TILE / 2, groundY + TILE * 1.5, 'ground').refreshBody();
+      for (let r = 0; r < GROUND_ROWS; r++) {
+        this.ground.create(x * TILE + TILE / 2, groundY + TILE / 2 + r * TILE, 'ground').refreshBody();
+      }
+    }
+
+    // Raised mesas — solid ground steps you climb onto and drop off.
+    // [startTile, lengthTiles, heightTiles] sitting on the base surface.
+    const mesas: Array<[number, number, number]> = [
+      [44, 6, 2],
+      [108, 7, 3],
+      [150, 5, 2]
+    ];
+    mesas.forEach(([tx, len, h]) => {
+      for (let i = 0; i < len; i++) {
+        for (let r = 0; r < h; r++) {
+          this.ground.create((tx + i) * TILE + TILE / 2, groundY - TILE / 2 - r * TILE, 'ground').refreshBody();
+        }
+      }
+    });
+
+    // Warp pipes — jump-over obstacles. [tile, heightTiles]; pipe is 2 wide.
+    const pipes: Array<[number, number]> = [
+      [28, 2],
+      [56, 3],
+      [96, 2],
+      [126, 4],
+      [164, 3]
+    ];
+    pipes.forEach(([tx, h]) => this.buildPipe(tx, h, groundY));
+
+    // Mario staircase ascending into the flag run.
+    const stairBase = 186;
+    for (let s = 0; s < 4; s++) {
+      for (let r = 0; r <= s; r++) {
+        this.ground.create((stairBase + s) * TILE + TILE / 2, groundY - TILE / 2 - r * TILE, 'ground').refreshBody();
+      }
     }
 
     const tierAt = (tx: number): 'drive-by' | 'mid' | 'climax' => tx >= 100 ? 'climax' : tx >= 55 ? 'mid' : 'drive-by';
@@ -139,15 +193,12 @@ export class World1Scene extends Phaser.Scene {
     const platforms: Array<[number, number, number]> = [
       [10, 5, 3],
       [33, 6, 2],
-      [50, 4, 2],
-      [60, 7, 3],
+      [62, 4, 2],
       [78, 5, 2],
       [90, 8, 3],
-      [108, 6, 2],
-      [122, 9, 3],
-      [142, 7, 3],
-      [157, 5, 2],
-      [180, 8, 3]
+      [122, 6, 2],
+      [138, 9, 3],
+      [178, 5, 2]
     ];
     platforms.forEach(([tx, height, len]) => {
       const lift = TIER_PLATFORM_LIFT[tierAt(tx)];
@@ -232,7 +283,7 @@ export class World1Scene extends Phaser.Scene {
         repeat: -1
       });
     }
-    const SLIME_TILES = [30, 50, 75, 95, 120, 145, 165, 185];
+    const SLIME_TILES = [30, 50, 75, 92, 120, 145, 170, 182];
     SLIME_TILES.forEach(tx => {
       const s = this.slimes.create(tx * TILE + TILE / 2, groundY - 8, 'slime') as Phaser.Physics.Arcade.Sprite;
       s.setCollideWorldBounds(true);
@@ -354,7 +405,7 @@ export class World1Scene extends Phaser.Scene {
     }
 
     if (this.hero.y > LEVEL_H + 64) {
-      this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 32);
+      this.hero.setPosition(2 * TILE, this.groundY - 32);
       this.hero.setVelocity(0, 0);
     }
 
@@ -456,6 +507,18 @@ export class World1Scene extends Phaser.Scene {
     }
   }
 
+  private buildPipe(tx: number, heightTiles: number, groundY: number): void {
+    // Pipe textures are 32px (2 tiles) wide. Body stacks up from the surface,
+    // capped by the wider top. Static body spans the whole pipe.
+    const cx = tx * TILE + TILE;
+    for (let r = 0; r < heightTiles; r++) {
+      const seg = this.ground.create(cx, groundY - TILE / 2 - r * TILE, 'pipe_body') as Phaser.Physics.Arcade.Image;
+      seg.refreshBody();
+    }
+    const top = this.ground.create(cx, groundY - TILE / 2 - heightTiles * TILE, 'pipe_top') as Phaser.Physics.Arcade.Image;
+    top.refreshBody();
+  }
+
   private buildParallax(): void {
     const cam = this.cameras.main;
     const skyTop = 0;
@@ -468,7 +531,7 @@ export class World1Scene extends Phaser.Scene {
       this.clouds.push(c);
     }
 
-    const groundTop = LEVEL_H - TILE * 2;
+    const groundTop = LEVEL_H - TILE * 3;
     for (let i = 0; i < 14; i++) {
       const x = (i * 280 + 40) % (LEVEL_W + 200);
       const big = i % 2 === 0;
@@ -559,7 +622,7 @@ export class World1Scene extends Phaser.Scene {
       this.popText(label, slime.x, slime.y - 10, color);
       this.cameras.main.shake(60 + this.airComboCount * 30, 0.003 + this.airComboCount * 0.001);
     } else {
-      this.hero.setPosition(2 * TILE, (LEVEL_H - TILE * 2) - 32);
+      this.hero.setPosition(2 * TILE, this.groundY - 32);
       this.hero.setVelocity(0, 0);
       this.airComboCount = 0;
       this.popText('OUCH', this.hero.x, this.hero.y - 12, '#ff5555');
