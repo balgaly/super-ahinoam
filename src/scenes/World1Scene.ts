@@ -521,10 +521,13 @@ export class World1Scene extends Phaser.Scene {
         ease: 'Cubic.Out',
         onComplete: () => {
           this.hero.setScale(targetScale);
-          this.hero.body!.setSize(16, 28).setOffset(4, 3);
-          // Re-anchor so the (now taller) body keeps its feet on the same
-          // ground line — otherwise center-origin growth buries the hero.
           const body = this.hero.body as Phaser.Physics.Arcade.Body;
+          body.setSize(16, 28).setOffset(4, 3);
+          // Sync the body to the new scale/position BEFORE measuring — Arcade
+          // caches scale and setSize() uses the stale value until this runs.
+          body.updateFromGameObject();
+          // Re-anchor so the taller body keeps its feet on the same ground
+          // line — otherwise center-origin growth buries the hero.
           this.hero.y += footY - body.bottom;
           body.updateFromGameObject();
           this.physics.world.resume();
