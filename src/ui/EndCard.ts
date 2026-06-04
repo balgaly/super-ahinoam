@@ -78,14 +78,14 @@ export class EndCard {
     const inspiredBy = document.createElement('span');
     inspiredBy.textContent = 'Inspired by ';
     const repoLink = document.createElement('a');
-    repoLink.href = 'https://github.com/golansofer/interactive-resume';
+    repoLink.href = 'https://github.com/golansoffer/interactive-resume';
     repoLink.target = '_blank';
     repoLink.rel = 'noopener noreferrer';
     repoLink.textContent = 'interactive-resume';
     const byPart = document.createElement('span');
     byPart.textContent = ' by ';
     const authorLink = document.createElement('a');
-    authorLink.href = 'https://github.com/golansofer';
+    authorLink.href = 'https://github.com/golansoffer';
     authorLink.target = '_blank';
     authorLink.rel = 'noopener noreferrer';
     authorLink.textContent = 'Golan Sofer';
