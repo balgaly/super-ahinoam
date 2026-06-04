@@ -88,7 +88,7 @@ export class EndCard {
     authorLink.href = 'https://github.com/golansoffer';
     authorLink.target = '_blank';
     authorLink.rel = 'noopener noreferrer';
-    authorLink.textContent = 'Golan Soffer';
+    authorLink.textContent = 'Golan Sofer';
     const tail = document.createElement('span');
     tail.textContent = ' — the original career-as-game pioneer whose vision lit the path.';
     creditsBody.append(inspiredBy, repoLink, byPart, authorLink, tail);
